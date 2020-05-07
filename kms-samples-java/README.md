@@ -35,8 +35,8 @@
          │  │                  CmkEncrypt.java
          │  │                  EnvelopeDecrypt.java
          │  │                  EnvelopeEncrypt.java
-		 │  │                  GenerateECCSR.java
-		 │  │				   GenerateRSACSR.java
+		     │  │                  GenerateECCSR.java
+		     │  │			        	   GenerateRSACSR.java
          │  │                  OpenApi.java
          │  │                  
          │  └─resources
