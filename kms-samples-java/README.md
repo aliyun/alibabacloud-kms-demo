@@ -28,8 +28,9 @@
          ├─main
          │  ├─java
          │  │  └─com
-         │  │      └─kms
-         │  │          └─samples
+         │  │      └─aliyun         
+         │  │         └─kms
+         │  │            └─samples
          │  │                  AsymmetricKey.java
          │  │                  CmkDecrypt.java
          │  │                  CmkEncrypt.java
@@ -43,8 +44,9 @@
          └─test
              └─java
                  └─com
-                     └─kms
-                         └─samples
+                     └─aliyun                 
+                        └─kms
+                          └─samples
                                  OpenApiTest.java
                                  TestRunner.java
   
