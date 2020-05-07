@@ -1,4 +1,4 @@
-package com.kms.samples;
+package com.aliyun.kms.samples;
 
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.exceptions.ClientException;
@@ -11,18 +11,11 @@ import com.aliyuncs.kms.model.v20160120.DecryptResponse;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 
-public class EnvelopeDecrypt {
+public class CmkDecrypt {
     private static DefaultAcsClient kmsClient;
-    private static final int GCM_TAG_LENGTH = 16;
 
     private static DefaultAcsClient kmsClient(String regionId, String accessKeyId, String accessKeySecret) {
         IClientProfile profile = DefaultProfile.getProfile(regionId, accessKeyId, accessKeySecret);
@@ -43,24 +36,21 @@ public class EnvelopeDecrypt {
         return response.getPlaintext();
     }
 
-    private static List<String> readTextFile(String inFile) throws IOException {
-        return Files.readAllLines(Paths.get(inFile));
-    }
-
-    private static void writeTextFile(String outFile, byte[] content) throws IOException {
-        File file = new File(outFile);
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(content);
+    private static String readTextFile(String inFile) throws IOException {
+        File file = new File(inFile);
+        try (InputStream in = new FileInputStream(file)) {
+            long len = file.length();
+            byte[] data = new byte[(int) len];
+            in.read(data);
+            return new String(data, StandardCharsets.UTF_8);
         }
     }
 
-    private static void localDecrypt(byte[] dataKey, byte[] iv, byte[] cipherText, String outFile) throws Exception {
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        SecretKeySpec keySpec = new SecretKeySpec(dataKey, "AES");
-        GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
-        cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmParameterSpec);
-        byte[] decryptedText = cipher.doFinal(cipherText);
-        writeTextFile(outFile, decryptedText);
+    private static void writeTextFile(String outFile, String content) throws IOException {
+        File file = new File(outFile);
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(content.getBytes());
+        }
     }
 
     public static void main(String[] args) {
@@ -70,27 +60,24 @@ public class EnvelopeDecrypt {
 
         kmsClient = kmsClient(regionId, accessKeyId, accessKeySecret);
 
-        String inFile = "./data/sales.csv.cipher";
-        String outFile = "./data/decrypted_sales.csv";
+        String inFile = "./certs/key.pem.cipher";
+        String outFile = "./certs/decrypted_key.pem.cipher";
 
-        try{
-            //Read encrypted file
-            List<String> inLines = readTextFile(inFile);
+        try {
+            //Read encrypted key file in text mode
+            String inContent = readTextFile(inFile);
 
-            //Decrypt data key
-            String dataKey = kmsDecrypt(inLines.get(0));
+            //Decrypt
+            String cipherText = kmsDecrypt(inContent);
 
-            //Locally decrypt the sales record
-            localDecrypt(Base64.getDecoder().decode(dataKey),
-                    Base64.getDecoder().decode(inLines.get(1)),
-                    Base64.getDecoder().decode(inLines.get(2)),
-                    outFile);
+            //Write Decrypted key file in text mode
+            writeTextFile(outFile, cipherText);
 
-        } catch (ClientException e) {
+        } catch (ClientException e){
             System.out.println("Failed.");
             System.out.println("Error code: " + e.getErrCode());
             System.out.println("Error message: " + e.getErrMsg());
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

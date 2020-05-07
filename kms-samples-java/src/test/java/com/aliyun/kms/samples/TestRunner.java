@@ -1,4 +1,4 @@
-package com.kms.samples;
+package com.aliyun.kms.samples;
 
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;

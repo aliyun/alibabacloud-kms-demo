@@ -1,4 +1,4 @@
-package com.kms.samples;
+package com.aliyun.kms.samples;
 
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.exceptions.ClientException;

@@ -1,4 +1,4 @@
-package com.kms.samples;
+package com.aliyun.kms.samples;
 
 import java.nio.charset.StandardCharsets;
 import java.security.*;

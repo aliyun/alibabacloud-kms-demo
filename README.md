@@ -35,8 +35,3 @@ KMS SDK下载：[SDK地址](https://help.aliyun.com/document_detail/28956.html?s
 - Python实现的对应目录：[kms-samples-python](./kms-samples-python)
 
 
-## 许可证
-
-Apache-2.0
-
-Copyright (c) 2009-present, Alibaba Cloud All rights reserved.
