@@ -35,6 +35,8 @@
          │  │                  CmkEncrypt.java
          │  │                  EnvelopeDecrypt.java
          │  │                  EnvelopeEncrypt.java
+		 │  │                  GenerateECCSR.java
+		 │  │				   GenerateRSACSR.java
          │  │                  OpenApi.java
          │  │                  
          │  └─resources
@@ -95,7 +97,7 @@
 - 运行，执行下面命令：
   
 ```
-  java -cp "target;src\main\resources\*"  com.kms.samples.TestRunner
+  java -cp "target;src\main\resources\*"  TestRunner
   ```
 
 注：
@@ -137,7 +139,7 @@
 - 运行，执行下面命令：
   
 ```
-  java -cp "target;src\main\resources\*"  com.kms.samples.CmkEncrypt
+  java -cp "target;src\main\resources\*"  CmkEncrypt
   ```
   
 - 执行成功后，会在certs文件夹生成密文文件：key.pem.cipher
@@ -177,7 +179,7 @@
 - 运行，执行下面命令：
   
   ```
-  java -cp "target;src\main\resources\*"  com.kms.samples.CmkDecrypt
+  java -cp "target;src\main\resources\*"  CmkDecrypt
   ```
   
   - 执行成功后，会在certs文件夹生成明文文件：decrypted_key.pem.cipher
@@ -221,7 +223,7 @@
   - 运行，执行下面命令：
   
   ```
-  java -cp "target;src\main\resources\*"  com.kms.samples.EnvelopeEncrypt
+  java -cp "target;src\main\resources\*"  EnvelopeEncrypt
   ```
   
   - 执行成功后，会在data文件夹生成密文文件：sales.csv.cipher
@@ -261,7 +263,7 @@
 - 运行，执行下面命令：
   
   ```
-  java -cp "target;src\main\resources\*"  com.kms.samples.EnvelopeDecrypt
+  java -cp "target;src\main\resources\*"  EnvelopeDecrypt
   ```
   
   - 执行成功后，会在data文件夹生成明文文件：decrypted_sales.csv
