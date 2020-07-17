@@ -147,23 +147,12 @@ public class GenerateECCSR {
         return listKeyVersions;
     }
 
-    private static String getCSR(String keyId, String keyVersionId, String subjectName, List<String> nameList, String kmsSignAlgorithm, String signatureAlgorithm) throws Exception {
+    private static String generateCSR(String keyId, String keyVersionId, String subjectName, List<String> nameList, String kmsSignAlgorithm, String signatureAlgorithm) throws Exception {
         GeneralName[] gns = new GeneralName[nameList.size()];
         for (int i = 0; i < nameList.size(); i++) {
             gns[i] = new GeneralName(GeneralName.dNSName, nameList.get(i));
         }
-
-        PKCS10CertificationRequest csr = generatePKCS10(keyId, keyVersionId, subjectName, gns, kmsSignAlgorithm, signatureAlgorithm);
-        try (StringWriter sw = new StringWriter();
-             JcaPEMWriter pem = new JcaPEMWriter(sw);) {
-            pem.writeObject(csr);
-            pem.flush();
-            return sw.toString();
-        }
-    }
-
-    private static PKCS10CertificationRequest generatePKCS10(String keyId, String keyVersionId, String subjectName, GeneralName[] sanArray, String kmsAlgorithm, String signatureAlgorithm) throws Exception {
-        GeneralNames subjectAltName = new GeneralNames(sanArray);
+        GeneralNames subjectAltName = new GeneralNames(gns);
 
         //获取KMS ECC公钥
         String publicKeyPem = getPublicKey(keyId, keyVersionId);
@@ -171,19 +160,28 @@ public class GenerateECCSR {
         publicKeyPem = publicKeyPem.replaceFirst("-----END PUBLIC KEY-----", "");
         publicKeyPem = publicKeyPem.replaceAll("\\s", "");
         byte[] publicKeyDer = Base64.getDecoder().decode(publicKeyPem);
-
         //ECC PEM公钥转换为PublicKey结构
         PublicKey pubKey = KeyFactory.getInstance("EC").generatePublic(new X509EncodedKeySpec(publicKeyDer));
 
+        //创建CSR构建器
         PKCS10CertificationRequestBuilder p10Builder = new PKCS10CertificationRequestBuilder(new X500Name(subjectName), SubjectPublicKeyInfo.getInstance(pubKey.getEncoded()));
 
+        //添加CSR扩展属性
         ExtensionsGenerator extensionsGenerator = new ExtensionsGenerator();
         extensionsGenerator.addExtension(Extension.subjectAlternativeName, false, subjectAltName);
         p10Builder.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extensionsGenerator.generate());
 
-        ContentSigner signer = new KmsContentSignerBuilder(kmsClient, keyId, keyVersionId, kmsAlgorithm, signatureAlgorithm);
+        //创建KMS签名器
+        ContentSigner signer = new KmsContentSignerBuilder(kmsClient, keyId, keyVersionId, kmsSignAlgorithm, signatureAlgorithm);
 
-        return p10Builder.build(signer);
+        //构建CSR
+        PKCS10CertificationRequest csr = p10Builder.build(signer);
+        try (StringWriter sw = new StringWriter();
+             JcaPEMWriter pem = new JcaPEMWriter(sw);) {
+            pem.writeObject(csr);
+            pem.flush();
+            return sw.toString();
+        }
     }
 
     private static void writeTextFile(String outFile, String content) throws IOException {
@@ -214,13 +212,13 @@ public class GenerateECCSR {
             String subjectName = "CN=Test Certificate Request, O=Aliyun KMS, C=CN";
             String kmsAlgorithm = "ECDSA_SHA_256";
             String signatureAlgorithm = "SHA256withECDSA";
-            String outFile = "./csr.pem";
+            String outFile = "./test.csr";
             List<String> domain = new ArrayList<>() {{
                 add("test.com");
             }};
 
             //获取CSR
-            String csr = getCSR(keyId, keyVersionId, subjectName, domain, kmsAlgorithm, signatureAlgorithm);
+            String csr = generateCSR(keyId, keyVersionId, subjectName, domain, kmsAlgorithm, signatureAlgorithm);
 
             //输出到本地
             writeTextFile(outFile, csr);

@@ -12,6 +12,10 @@
 
 ​	4、KMS非对称密钥加解密签名验签使用样例
 
+​	5、KMS非对称密钥生成CSR最佳实践样例
+
+​	6、Alipay-easysdk使用KMS签名最佳实践样例
+
 
 
 ## 项目源码组织结构
@@ -28,9 +32,8 @@
          ├─main
          │  ├─java
          │  │  └─com
-         │  │      └─aliyun         
-         │  │         └─kms
-         │  │            └─samples
+         │  │      └─kms
+         │  │          └─samples
          │  │                  AsymmetricKey.java
          │  │                  CmkDecrypt.java
          │  │                  CmkEncrypt.java
@@ -38,15 +41,19 @@
          │  │                  EnvelopeEncrypt.java
          │  │                  GenerateECCSR.java
          │  │                  GenerateRSACSR.java
+         │  │                  GenerateSM2CSR.java
+         │  │                  KmsAlipayEasySDKCertDemo.java
+         │  │                  KmsAlipayEasySDKPublicKeyDemo.java
          │  │                  OpenApi.java
          │  │                  
          │  └─resources
+         │     └─fixture
+         │            aliyunAccessKey.json
          └─test
              └─java
                  └─com
-                     └─aliyun                 
-                        └─kms
-                          └─samples
+                     └─kms
+                         └─samples
                                  OpenApiTest.java
                                  TestRunner.java
   
@@ -62,6 +69,10 @@
 3、EnvelopeEncrypt.java和EnvelopeDecrypt.java包含KMS信封加密本地加密和解密最佳实践样例
 
 4、AsymmetricKey.java包含了KMS非对称密钥加密、解密、签名和验签使用样例
+
+5、GenerateECCSR.java、GenerateRSACSR.java和GenerateSM2CSR.java包含KMS非对称密钥生成CSR最佳实践样例
+
+6、KmsAlipayEasySDKCertDemo.java和KmsAlipayEasySDKPublicKeyDemo.java包含Alipay-easysdk使用KMS签名最佳实践样例
 
 
 
@@ -94,13 +105,13 @@
   
 ```
   javac -encoding UTF-8 -cp "src\main\resources\*" -d target src\main\java\com\kms\samples\OpenApi.java src\test\java\com\kms\samples\*.java
-  ```
-  
+```
+
 - 运行，执行下面命令：
   
 ```
   java -cp "target;src\main\resources\*"  TestRunner
-  ```
+```
 
 注：
 
@@ -136,14 +147,14 @@
   
 ```
   javac -encoding UTF-8 -cp "src\main\resources\*" -d target src\main\java\com\kms\samples\CmkEncrypt.java 
-  ```
-  
+```
+
 - 运行，执行下面命令：
   
 ```
   java -cp "target;src\main\resources\*"  CmkEncrypt
-  ```
-  
+```
+
 - 执行成功后，会在certs文件夹生成密文文件：key.pem.cipher
 
 注：
@@ -176,11 +187,12 @@
   
   ```
   javac -encoding UTF-8 -cp "src\main\resources\*" -d target src\main\java\com\kms\samples\CmkDecrypt.java 
+  ```
 ```
   
 - 运行，执行下面命令：
   
-  ```
+```
   java -cp "target;src\main\resources\*"  CmkDecrypt
   ```
   
@@ -264,7 +276,7 @@
   
 - 运行，执行下面命令：
   
-  ```
+```
   java -cp "target;src\main\resources\*"  EnvelopeDecrypt
   ```
   
@@ -274,3 +286,5 @@
 
 - 样例中的配置信息，如ak，as，endpoint，regionid等，要根据真实信息进行修改
 
+
+  ```

@@ -1,5 +1,6 @@
 package com.aliyun.kms.samples;
 
+
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.http.FormatType;
@@ -8,9 +9,18 @@ import com.aliyuncs.kms.model.v20160120.*;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 
+import org.bouncycastle.asn1.gm.GMNamedCurves;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.SM3Digest;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
@@ -20,19 +30,14 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.Security;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
-public class GenerateRSACSR {
+public class GenerateSM2CSR {
     private static DefaultAcsClient kmsClient;
-    private static Map<String, String> digestAlgs = new HashMap<>();
-
-    static {
-        digestAlgs.put("RSA_PKCS1_SHA_256", "SHA-256");
-        digestAlgs.put("ECDSA_SHA_256", "SHA-256");
-    }
-
     //实现KMS的ContentSigner构建器
     private static class KmsContentSignerBuilder implements ContentSigner {
         private DefaultAcsClient kmsClient;
@@ -41,14 +46,20 @@ public class GenerateRSACSR {
         private String keyVersionId;
         private AlgorithmIdentifier sigAlgId;
         private ByteArrayOutputStream stream;
+        private PublicKey publicKey;
+        private static Map<String, String> namedCurves = new HashMap<>();
+        static {
+            namedCurves.put("SM2DSA", "sm2p256v1");
+        }
 
-        KmsContentSignerBuilder(DefaultAcsClient kmsClient, String keyId, String keyVersionId, String kmsAlgorithm, String signatureAlgorithm) {
+        KmsContentSignerBuilder(DefaultAcsClient kmsClient, String keyId, String keyVersionId, String kmsAlgorithm, String signAlgorithm, PublicKey pubKey) {
             this.kmsClient = kmsClient;
             this.kmsAlgorithm = kmsAlgorithm;
             this.keyId = keyId;
             this.keyVersionId = keyVersionId;
-            this.sigAlgId = (new DefaultSignatureAlgorithmIdentifierFinder()).find(signatureAlgorithm);
+            this.sigAlgId = (new DefaultSignatureAlgorithmIdentifierFinder()).find(signAlgorithm);
             this.stream = new ByteArrayOutputStream();
+            this.publicKey = pubKey;
         }
 
         @Override
@@ -70,10 +81,54 @@ public class GenerateRSACSR {
             }
         }
 
-        private byte[] asymmetricSign(String keyId, String keyVersionId, String algorithm, byte[] message) throws ClientException, NoSuchAlgorithmException, NoSuchProviderException {
+        private byte[] getZ(ECPublicKeyParameters ecPublicKeyParameters, ECDomainParameters ecDomainParameters) {
+            Digest digest = new SM3Digest();
+            digest.reset();
+
+            String userID = "1234567812345678";
+            addUserID(digest, userID.getBytes());
+
+            addFieldElement(digest, ecDomainParameters.getCurve().getA());
+            addFieldElement(digest, ecDomainParameters.getCurve().getB());
+            addFieldElement(digest, ecDomainParameters.getG().getAffineXCoord());
+            addFieldElement(digest, ecDomainParameters.getG().getAffineYCoord());
+            addFieldElement(digest, ecPublicKeyParameters.getQ().getAffineXCoord());
+            addFieldElement(digest, ecPublicKeyParameters.getQ().getAffineYCoord());
+
+            byte[] result = new byte[digest.getDigestSize()];
+            digest.doFinal(result, 0);
+            return result;
+        }
+
+        private void addUserID(Digest digest, byte[] userID) {
+            int len = userID.length * 8;
+            digest.update((byte) (len >> 8 & 0xFF));
+            digest.update((byte) (len & 0xFF));
+            digest.update(userID, 0, userID.length);
+        }
+
+        private void addFieldElement(Digest digest, ECFieldElement v) {
+            byte[] p = v.getEncoded();
+            digest.update(p, 0, p.length);
+        }
+
+        private byte[] calcSM3Digest(PublicKey pubKey, byte[] message) {
+            X9ECParameters x9ECParameters = GMNamedCurves.getByName(namedCurves.get(this.kmsAlgorithm));
+            ECDomainParameters ecDomainParameters = new ECDomainParameters(x9ECParameters.getCurve(), x9ECParameters.getG(), x9ECParameters.getN());
+            BCECPublicKey localECPublicKey = (BCECPublicKey) pubKey;
+            ECPublicKeyParameters ecPublicKeyParameters = new ECPublicKeyParameters(localECPublicKey.getQ(), ecDomainParameters);
+            byte[] z = getZ(ecPublicKeyParameters, ecDomainParameters);
+            Digest digest = new SM3Digest();
+            digest.update(z, 0, z.length);
+            digest.update(message, 0, message.length);
+            byte[] result = new byte[digest.getDigestSize()];
+            digest.doFinal(result, 0);
+            return result;
+        }
+
+        private byte[] asymmetricSign(String keyId, String keyVersionId, String algorithm, byte[] message) throws ClientException {
             final AsymmetricSignRequest req = new AsymmetricSignRequest();
-            byte[] digest = MessageDigest.getInstance(digestAlgs.get(algorithm)).digest(message);
-            //digest要进行base64编码
+            byte[] digest = calcSM3Digest(this.publicKey, message);
             String base64Digest = Base64.getEncoder().encodeToString(digest);
             req.setAcceptFormat(FormatType.JSON);
             req.setKeyId(keyId);
@@ -81,7 +136,6 @@ public class GenerateRSACSR {
             req.setAlgorithm(algorithm);
             req.setDigest(base64Digest);
             AsymmetricSignResponse asymSignRes = this.kmsClient.getAcsResponse(req);
-            //签名要进行base64解码
             return Base64.getDecoder().decode(asymSignRes.getValue().getBytes(StandardCharsets.UTF_8));
         }
     }
@@ -108,13 +162,21 @@ public class GenerateRSACSR {
         return keyRes.getKeyMetadata().getKeyId();
     }
 
-    private static String getPublicKey(String keyId, String keyVersionId) throws ClientException {
-        final GetPublicKeyRequest req = new GetPublicKeyRequest();
-        req.setAcceptFormat(FormatType.JSON);
-        req.setKeyId(keyId);
-        req.setKeyVersionId(keyVersionId);
-        GetPublicKeyResponse publicKeyRes = kmsClient.getAcsResponse(req);
-        return publicKeyRes.getPublicKey();
+    private static PublicKey getPublicKey(String keyId, String keyVersionId) throws Exception {
+        final GetPublicKeyRequest request = new GetPublicKeyRequest();
+        request.setAcceptFormat(FormatType.JSON);
+        request.setKeyId(keyId);
+        request.setKeyVersionId(keyVersionId);
+        GetPublicKeyResponse response = kmsClient.getAcsResponse(request);
+
+        String pemKey = response.getPublicKey();
+        pemKey = pemKey.replaceFirst("-----BEGIN PUBLIC KEY-----", "");
+        pemKey = pemKey.replaceFirst("-----END PUBLIC KEY-----", "");
+        pemKey = pemKey.replaceAll("\\s", "");
+        byte[] derKey = Base64.getDecoder().decode(pemKey);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(derKey);
+        Security.addProvider(new BouncyCastleProvider());
+        return KeyFactory.getInstance("EC","BC").generatePublic(keySpec);
     }
 
     private static List<ListKeyVersionsResponse.KeyVersion> listKeyVersions(String keyId) throws ClientException {
@@ -150,14 +212,8 @@ public class GenerateRSACSR {
         }
         GeneralNames subjectAltName = new GeneralNames(gns);
 
-        //获取KMS RSA公钥
-        String publicKeyPem = getPublicKey(keyId, keyVersionId);
-        publicKeyPem = publicKeyPem.replaceFirst("-----BEGIN PUBLIC KEY-----", "");
-        publicKeyPem = publicKeyPem.replaceFirst("-----END PUBLIC KEY-----", "");
-        publicKeyPem = publicKeyPem.replaceAll("\\s", "");
-        byte[] publicKeyDer = Base64.getDecoder().decode(publicKeyPem);
-        //RSA PEM公钥转换为PublicKey结构
-        PublicKey pubKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKeyDer));
+        //获取KMS ECC公钥
+        PublicKey pubKey = getPublicKey(keyId, keyVersionId);
 
         //创建CSR构建器
         PKCS10CertificationRequestBuilder p10Builder = new PKCS10CertificationRequestBuilder(new X500Name(subjectName), SubjectPublicKeyInfo.getInstance(pubKey.getEncoded()));
@@ -168,12 +224,12 @@ public class GenerateRSACSR {
         p10Builder.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extensionsGenerator.generate());
 
         //创建KMS签名器
-        ContentSigner signer = new KmsContentSignerBuilder(kmsClient, keyId, keyVersionId, kmsSignAlgorithm, signatureAlgorithm);
+        ContentSigner signer = new GenerateSM2CSR.KmsContentSignerBuilder(kmsClient, keyId, keyVersionId, kmsSignAlgorithm, signatureAlgorithm, pubKey);
 
         //构建CSR
         PKCS10CertificationRequest csr = p10Builder.build(signer);
         try (StringWriter sw = new StringWriter();
-             JcaPEMWriter pem = new JcaPEMWriter(sw)) {
+             JcaPEMWriter pem = new JcaPEMWriter(sw);) {
             pem.writeObject(csr);
             pem.flush();
             return sw.toString();
@@ -195,26 +251,27 @@ public class GenerateRSACSR {
         kmsClient = kmsClient(regionId, accessKeyId, accessKeySecret, null, null);
 
         try {
-            String keySpec = "RSA_2048";
+            String keySpec = "EC_SM2";
             String keyUsage = "SIGN/VERIFY";
 
-            //创建KMS RSA非对称密钥（RSA_2048，SIGN/VERIFY）
+            //创建KMS SM2非对称密钥（EC_SM2，SIGN/VERIFY）
             String keyId = createKey(keySpec, keyUsage);
+
 
             //获取非对称密钥密钥版本ID
             List<ListKeyVersionsResponse.KeyVersion> keyVersionList = listKeyVersions(keyId);
             String keyVersionId = keyVersionList.get(0).getKeyVersionId();
 
-            String subjectName = "CN=Test Certificate Request, O=ali, C=CN";
-            String kmsAlgorithm = "RSA_PKCS1_SHA_256";
-            String signatureAlgorithm = "SHA256withRSA";
+            String subjectName = "CN=example.com,C=CN,ST=zj,L=hz,O=aliyun,OU=KMS";
+            String kmsAlgorithm = "SM2DSA";
+            String signAlgorithm = "SM3WITHSM2";
             String outFile = "./test.csr";
             List<String> domain = new ArrayList<>() {{
                 add("test.com");
             }};
 
-            //生成CSR
-            String csr = generateCSR(keyId, keyVersionId, subjectName, domain, kmsAlgorithm, signatureAlgorithm);
+            //获取CSR
+            String csr = generateCSR(keyId, keyVersionId, subjectName, domain, kmsAlgorithm, signAlgorithm);
 
             //输出到本地
             writeTextFile(outFile, csr);
@@ -228,3 +285,4 @@ public class GenerateRSACSR {
         }
     }
 }
+
