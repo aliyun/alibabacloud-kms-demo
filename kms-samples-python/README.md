@@ -12,6 +12,8 @@
 
 ​	4、KMS非对称密钥加解密签名验签使用样例
 
+​	5、KMS非对称密钥生成证书请求使用样例
+
 
 
 ## 项目源码组织结构
@@ -29,6 +31,7 @@
             envelope_encrypt.py
             openapi.py
             test_openapi.py
+            generate_csr.py
   ```
   
 
@@ -42,6 +45,7 @@
 
 4、asymmetric.py包含了KMS非对称密钥加密、解密、签名和验签使用样例
 
+5、generate_csr.py包含了KMS非对称密钥生成证书请求的使用样例，依赖pyOpenSSL，可通过pip3 install pyOpenSSL安装
 
 
 ## 使用方法
@@ -100,7 +104,7 @@
   
 - 打开命令行窗口，切换到项目下kms-samples-python目录，执行下面命令：
   
-```
+  ```
   python cmk_decrypt.py --ak "****" --as "****"
   ```
   

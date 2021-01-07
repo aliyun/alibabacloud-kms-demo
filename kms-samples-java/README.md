@@ -12,9 +12,19 @@
 
 ​	4、KMS非对称密钥加解密签名验签使用样例
 
-​	5、KMS非对称密钥生成CSR最佳实践样例
+​	5、KMS使用公钥保护导出数据密钥使用样例
 
-​	6、Alipay-easysdk使用KMS签名最佳实践样例
+​	6、KMS数据密钥转加密使用样例
+
+​	7、使用STS Token或ECS RamRole访问KMS使用样例
+
+​	8、使用指数退避方法对请求错误进行重试最佳实践样例
+
+​	9、KMS非对称密钥生成CSR最佳实践样例
+
+​	10、Alipay-easysdk/sdk使用KMS签名最佳实践样例
+
+​	11、使用KMS非对称CMK对PDF文件签名最佳实践样例
 
 
 
@@ -37,6 +47,9 @@
          │  │                  AsymmetricKey.java
          │  │                  CmkDecrypt.java
          │  │                  CmkEncrypt.java
+         │  │                  ECSRamRoleCredentialsDemo.java
+         │  │                  ExportDataKeyDemo.java
+         │  │                  GenerateAndExportDataKeyDemo.java
          │  │                  EnvelopeDecrypt.java
          │  │                  EnvelopeEncrypt.java
          │  │                  GenerateECCSR.java
@@ -44,7 +57,16 @@
          │  │                  GenerateSM2CSR.java
          │  │                  KmsAlipayEasySDKCertDemo.java
          │  │                  KmsAlipayEasySDKPublicKeyDemo.java
+         │  │                  KmsAlipaySDKCertDemo.java
+         │  │                  KmsAlipaySDKPublicKeyDemo.java
+         │  │                  KmsSDKExponentialBackoffDemo.java
          │  │                  OpenApi.java
+         │  │                  ReEncryptAsymmToSymmDemo.java
+         │  │                  ReEncryptSymmToSymmDemo.java
+         │  │                  STSTokenCredentialsDemo.java
+         │  │                └─pdfsig   
+         │  │                      KMSiTextSignature.java
+         │  │                      KmsPdfSignSample.java
          │  │                  
          │  └─resources
          │     └─fixture
@@ -70,10 +92,19 @@
 
 4、AsymmetricKey.java包含了KMS非对称密钥加密、解密、签名和验签使用样例
 
-5、GenerateECCSR.java、GenerateRSACSR.java和GenerateSM2CSR.java包含KMS非对称密钥生成CSR最佳实践样例
+5、ExportDataKeyDemo.java、GenerateAndExportDataKeyDemo.java包含了KMS使用公钥保护导出数据密钥使用样例
 
-6、KmsAlipayEasySDKCertDemo.java和KmsAlipayEasySDKPublicKeyDemo.java包含Alipay-easysdk使用KMS签名最佳实践样例
+6、ReEncryptSymmToSymmDemo.java 、ReEncryptAsymmToSymmDemo.java包含了KMSKMS数据密钥转加密使用样例
 
+7、ECSRamRoleCredentialsDemo.java、STSTokenCredentialsDemo.java包含了使用STS Token或ECS RamRole访问KMS使用样例
+
+8、KmsSDKExponentialBackoffDemo.java 包含KMS使用指数退避方法对请求错误进行重试最佳实践样例
+
+9、GenerateECCSR.java、GenerateRSACSR.java和GenerateSM2CSR.java包含KMS非对称密钥生成CSR最佳实践样例
+
+10、KmsAlipayEasySDKCertDemo.java和KmsAlipayEasySDKPublicKeyDemo.java包含Alipay-easysdk使用KMS签名最佳实践样例
+
+11、KMSiTextSignature.java KmsPdfSignSample.java 包含KMS非对称密钥对pdf文件进行签名的最佳实践样例
 
 
 ## 使用方法
@@ -98,7 +129,7 @@
   - 依赖包准备
   - 下载最新版本的JUnit，这里以junit-4.13.jar示例，将其复制到resources文件夹
     - 下载aliyun-java-sdk-core-4.5.0，将其复制到resources文件夹
-    - 下载aliyun-java-sdk-kms-2.10.1，将其复制到resources文件夹
+    - 下载aliyun-java-sdk-kms-2.11.0，将其复制到resources文件夹
     - 下载gson-2.8.5，将其复制到resources文件夹
   
 - 编译，执行下面命令：
@@ -137,7 +168,7 @@
   - 准备工作
   - 需要依赖的包
       - 下载aliyun-java-sdk-core-4.5.0，将其复制到resources文件夹
-      - 下载aliyun-java-sdk-kms-2.10.1，将其复制到resources文件夹
+      - 下载aliyun-java-sdk-kms-2.11.0，将其复制到resources文件夹
       - 下载gson-2.8.5，将其复制到resources文件夹
     - 确保已拥有一个KMS主密钥，本示例使用别名调用加密接口，假定主密钥别名为：alias/Apollo/WorkKey
     - 在kms-samples-java目录下创建certs文件夹
@@ -179,7 +210,7 @@
   - 准备工作
   - 需要依赖的包
       - 下载aliyun-java-sdk-core-4.5.0，将其复制到resources文件夹
-      - 下载aliyun-java-sdk-kms-2.10.1，将其复制到resources文件夹
+      - 下载aliyun-java-sdk-kms-2.11.0，将其复制到resources文件夹
     - 下载gson-2.8.5，将其复制到resources文件夹
     - 本示例需要用到加密示例生成的密文文件key.pem.cipher，请先运行加密示例产生此文件
   
@@ -188,11 +219,10 @@
   ```
   javac -encoding UTF-8 -cp "src\main\resources\*" -d target src\main\java\com\kms\samples\CmkDecrypt.java 
   ```
-```
   
 - 运行，执行下面命令：
   
-```
+  ```
   java -cp "target;src\main\resources\*"  CmkDecrypt
   ```
   
@@ -222,7 +252,7 @@
   - 准备工作
   - 需要依赖的包
       - 下载aliyun-java-sdk-core-4.5.0，将其复制到resources文件夹
-      - 下载aliyun-java-sdk-kms-2.10.1，将其复制到resources文件夹
+      - 下载aliyun-java-sdk-kms-2.11.0，将其复制到resources文件夹
       - 下载gson-2.8.5，将其复制到resources文件夹
     - 确保已拥有一个KMS主密钥，本示例使用别名调用生成数据密钥接口，假定主密钥别名为：alias/Apollo/WorkKey
     - 在kms-samples-java目录下创建data文件夹
@@ -264,7 +294,7 @@
   - 准备工作
   - 需要依赖的包
       - 下载aliyun-java-sdk-core-4.5.0，将其复制到resources文件夹
-      - 下载aliyun-java-sdk-kms-2.10.1，将其复制到resources文件夹
+      - 下载aliyun-java-sdk-kms-2.11.0，将其复制到resources文件夹
       - 下载gson-2.8.5，将其复制到resources文件夹
     - 本示例需要用到加密示例生成的密文文件sales.csv.cipher，请先运行加密示例产生此文件
   
@@ -272,11 +302,11 @@
   
   ```
   javac -encoding UTF-8 -cp "src\main\resources\*" -d target src\main\java\com\kms\samples\EnvelopeDecrypt.java 
-```
+  ```
   
 - 运行，执行下面命令：
   
-```
+  ```
   java -cp "target;src\main\resources\*"  EnvelopeDecrypt
   ```
   
@@ -285,6 +315,3 @@
 注：
 
 - 样例中的配置信息，如ak，as，endpoint，regionid等，要根据真实信息进行修改
-
-
-  ```
