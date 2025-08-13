@@ -1,0 +1,6 @@
+aliyun-python-sdk-core>=2.13.3
+aliyun-python-sdk-kms>=2.10.0
+pycryptodome>=3.10.1
+ecdsa>=0.17.0
+pyOpenSSL>=20.0.0
+alibabacloud-kms20160120>=2.3.1
