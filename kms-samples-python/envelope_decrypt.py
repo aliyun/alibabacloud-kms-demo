@@ -1,25 +1,23 @@
 import argparse
 import base64
-import json
 
 from Crypto.Cipher import AES
-from aliyunsdkcore.client import AcsClient
-from aliyunsdkkms.request.v20160120 import DecryptRequest
+from alibabacloud_kms20160120.client import Client
+from alibabacloud_kms20160120.models import DecryptRequest
+from alibabacloud_tea_openapi.models import Config
 
 
-def kms_decrypt(client, cipher_text):
-    request = DecryptRequest.DecryptRequest()
-    request.set_accept_format('JSON')
-    request.set_CiphertextBlob(cipher_text)
-    response = json.loads(client.do_action_with_exception(request))
-    return response.get('Plaintext')
+def kms_decrypt(client, ciphertext_blob):
+    request = DecryptRequest(ciphertext_blob=ciphertext_blob)
+    response = client.decrypt(request)
+    return response.body.plaintext
 
 
 def read_text_file(in_file):
     with open(in_file, 'r') as f:
         lines = []
         for line in f:
-            lines.append(line)
+            lines.append(line.strip())
     return lines
 
 
@@ -41,8 +39,12 @@ def main():
     parser.add_argument('--region', default='cn-hangzhou', help='the region id')
     args = vars(parser.parse_args())
 
-    client = AcsClient(args["ak"], args["as"], args["region"])
-    # client.set_verify(False)
+    config = Config(
+        access_key_id=args["ak"],
+        access_key_secret=args["as"],
+        endpoint=f'kms.{args["region"]}.aliyuncs.com'
+    )
+    client = Client(config)
 
     in_file = './data/sales.csv.cipher'
     out_file = './data/decrypted_sales.csv'

@@ -1,17 +1,15 @@
 import argparse
 import base64
-import json
 
-from aliyunsdkcore.client import AcsClient
-from aliyunsdkkms.request.v20160120 import DecryptRequest
+from alibabacloud_kms20160120.client import Client
+from alibabacloud_kms20160120.models import DecryptRequest
+from alibabacloud_tea_openapi.models import Config
 
 
-def kms_decrypt(client, cipher_text):
-    request = DecryptRequest.DecryptRequest()
-    request.set_accept_format('JSON')
-    request.set_CiphertextBlob(cipher_text)
-    response = json.loads(client.do_action_with_exception(request))
-    return response.get('Plaintext')
+def kms_decrypt(client, ciphertext_blob):
+    request = DecryptRequest(ciphertext_blob=ciphertext_blob)
+    response = client.decrypt(request)
+    return response.body.plaintext
 
 
 def read_text_file(in_file):
@@ -32,21 +30,24 @@ def main():
     parser.add_argument('--region', default='cn-hangzhou', help='the region id')
     args = vars(parser.parse_args())
 
-    client = AcsClient(args["ak"], args["as"], args["region"])
-    # client.set_verify(False)
+    config = Config(
+        access_key_id=args["ak"],
+        access_key_secret=args["as"],
+        endpoint=f'kms.{args["region"]}.aliyuncs.com'
+    )
+    client = Client(config)
 
     in_file = './certs/key.pem.cipher'
-    out_file = './certs/decrypted_key.pem.cipher'
+    out_file = './certs/decrypted_key.pem'
 
     # Read encrypted key file in text mode
     in_content = read_text_file(in_file)
 
     # Decrypt
-    cipher_text = kms_decrypt(client, in_content)
+    plaintext_b64 = kms_decrypt(client, in_content)
 
-    # Write Decrypted key file in text mode
-    # 这里使用base64解码是因为加密时明文进行了base64编码
-    write_text_file(out_file, base64.b64decode(cipher_text).decode('utf-8'))
+    # Decode base64 (since encrypt sample base64-encodes before encrypting)
+    write_text_file(out_file, base64.b64decode(plaintext_b64).decode('utf-8'))
 
 
 if __name__ == '__main__':

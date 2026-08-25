@@ -1,21 +1,18 @@
 import argparse
 import base64
-import json
 
 from Crypto.Cipher import AES
-from aliyunsdkcore.client import AcsClient
-from aliyunsdkkms.request.v20160120 import GenerateDataKeyRequest
+from alibabacloud_kms20160120.client import Client
+from alibabacloud_kms20160120.models import GenerateDataKeyRequest
+from alibabacloud_tea_openapi.models import Config
 
 
 def kms_generate_data_key(client, key_alias):
-    request = GenerateDataKeyRequest.GenerateDataKeyRequest()
-    request.set_accept_format('JSON')
-    request.set_KeyId(key_alias)
-    request.set_NumberOfBytes(32)
-    response = json.loads(client.do_action_with_exception(request))
-    plaintext = response.get('Plaintext')
-    cipher_text = response.get('CiphertextBlob')
-    return plaintext, cipher_text
+    request = GenerateDataKeyRequest(key_id=key_alias, number_of_bytes=32)
+    response = client.generate_data_key(request)
+    plaintext = response.body.plaintext
+    ciphertext_blob = response.body.ciphertext_blob
+    return plaintext, ciphertext_blob
 
 
 def read_text_file(in_file):
@@ -55,8 +52,12 @@ def main():
     parser.add_argument('--region', default='cn-hangzhou', help='the region id')
     args = vars(parser.parse_args())
 
-    client = AcsClient(args["ak"], args["as"], args["region"])
-    # client.set_verify(False)
+    config = Config(
+        access_key_id=args["ak"],
+        access_key_secret=args["as"],
+        endpoint=f'kms.{args["region"]}.aliyuncs.com'
+    )
+    client = Client(config)
 
     key_alias = 'alias/Apollo/WorkKey'
     in_file = './data/sales.csv'

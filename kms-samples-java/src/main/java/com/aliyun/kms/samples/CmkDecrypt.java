@@ -61,7 +61,7 @@ public class CmkDecrypt {
         kmsClient = kmsClient(regionId, accessKeyId, accessKeySecret);
 
         String inFile = "./certs/key.pem.cipher";
-        String outFile = "./certs/decrypted_key.pem.cipher";
+        String outFile = "./certs/decrypted_key.pem";
 
         try {
             //Read encrypted key file in text mode
