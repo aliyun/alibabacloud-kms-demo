@@ -12,6 +12,8 @@
 
 ​	4、KMS非对称密钥加解密签名验签使用样例
 
+​	5、阿里云SDK V2版本信封加密本地加解密使用样例
+
 
 
 ## 项目源码组织结构
@@ -28,7 +30,9 @@
        ├─cmk_decrypt_best_practices
        ├─cmk_encrypt_best_practices
        ├─envelope_decrypt_best_practices
+       ├─envelope_decrypt_v2_best_practices
        ├─envelope_encrypt_best_practices
+       ├─envelope_encrypt_v2_best_practices
        └─kms_api_samples
   ```
   
@@ -42,6 +46,8 @@
 3、envelope_encrypt_best_practices和envelope_decrypt_best_practices目录包含KMS信封加密本地加密和解密最佳实践样例
 
 4、asymmetric_ecdsa_p256_samples、asymmetric_ecdsa_p256k_samples、asymmetric_rsaes_samples和asymmetric_rsassa_samples包含了KMS非对称密钥加密、解密、签名和验签使用样例
+
+5、envelope_encrypt_v2_best_practices和envelope_decrypt_v2_best_practices目录包含阿里云SDK V2版本（kms-20160120）信封加密本地加密和解密最佳实践样例
 
 
 
@@ -190,3 +196,66 @@
 
 - 样例中的配置信息，如ak，as，endpoint，regionid等，要根据真实信息进行修改
 
+
+
+### 四、阿里云SDK V2版本信封加密本地加解密最佳实践样例
+
+V2版本样例基于阿里云SDK V2（Go模块：github.com/alibabacloud-go/kms-20160120/v3）实现，
+数据密钥采用32字节（256位）AES密钥，本地加密采用GCM模式，流程参考
+[使用KMS信封加密在本地环境进行加解密](https://help.aliyun.com/zh/kms/key-management-service/use-cases/use-envelope-encryption)。
+
+#### 1、加密数据
+
+- 设置环境变量AccessKey（样例通过环境变量读取AK，请勿在代码中硬编码）：
+
+  ```
+  export ALIBABA_CLOUD_ACCESS_KEY_ID=<your access key id>
+  export ALIBABA_CLOUD_ACCESS_KEY_SECRET=<your access key secret>
+  ```
+
+- 运行样例
+
+  - 准备工作
+    - 确保已拥有一个KMS对称密钥，修改样例中的Endpoint与KeyId常量
+    - 在envelope_encrypt_v2_best_practices目录下创建data文件夹
+    - 准备一个明文数据文件，复制到data文件夹里，本示例假定明文数据文件名为：sales.csv
+    - 首次运行需初始化Go模块依赖：
+
+      ```
+      go mod init envelope_encrypt_v2
+      go get github.com/alibabacloud-go/kms-20160120/v3
+      ```
+
+  - 在打开的命令行窗口执行下面命令进行加密：
+
+    ```
+    go run envelope_encrypt_v2.go
+    ```
+
+  - 执行成功后，会在data文件夹生成密文文件：sales.csv.cipher（三行文本：数据密钥密文、IV、数据密文）
+
+#### 2、解密数据
+
+- 运行样例
+
+  - 准备工作
+    - 在envelope_decrypt_v2_best_practices目录下创建data文件夹
+    - 将加密示例生成的密文文件sales.csv.cipher复制到data文件夹
+    - 首次运行需初始化Go模块依赖：
+
+      ```
+      go mod init envelope_decrypt_v2
+      go get github.com/alibabacloud-go/kms-20160120/v3
+      ```
+
+  - 在打开的命令行窗口执行下面命令进行解密：
+
+    ```
+    go run envelope_decrypt_v2.go
+    ```
+
+  - 执行成功后，会在data文件夹生成明文文件：decrypted_sales.csv
+
+注：
+
+- 样例中的配置信息，如endpoint、keyId等，要根据真实信息进行修改

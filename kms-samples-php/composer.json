@@ -1,0 +1,5 @@
+{
+    "require": {
+        "alibabacloud/kms-20160120": "^2.0"
+    }
+}

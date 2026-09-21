@@ -21,6 +21,7 @@ KMS SDK下载：[SDK地址](https://help.aliyun.com/document_detail/28956.html)
 - Java实现的对应目录：[kms-samples-java](./kms-samples-java)
 - Go实现的对应目录：[kms-samples-go](./kms-samples-go)
 - Python实现的对应目录：[kms-samples-python](./kms-samples-python)
+- PHP实现的对应目录：[kms-samples-php](./kms-samples-php)
 
 ### 二、样例代码组成
 
@@ -38,4 +39,5 @@ KMS SDK下载：[SDK地址](https://help.aliyun.com/document_detail/28956.html)
 | 证书请求    | 基于非对称主密钥生成证书请求    | [RSA证书请求](./kms-samples-java/src/main/java/com/aliyun/kms/samples/GenerateRSACSR.java), <br>[ECC证书请求](./kms-samples-java/src/main/java/com/aliyun/kms/samples/GenerateECCSR.java), <br>[SM2证书请求](./kms-samples-java/src/main/java/com/aliyun/kms/samples/GenerateSM2CSR.java)    | --- | [证书请求](./kms-samples-python/generate_csr.py) |
 | 支付宝开放平台    | [通过阿里云KMS产生RSA密钥对，<br>提供支付宝开放平台接口加签功能](https://forum.alipay.com/mini-app/post/8001031)   | [alipayEasySDK公钥模式](./kms-samples-java/src/main/java/com/aliyun/kms/samples/KmsAlipayEasySDKPublicKeyDemo.java), <br>[alipayEasySDK证书模式](./kms-samples-java/src/main/java/com/aliyun/kms/samples/KmsAlipayEasySDKCertDemo.java), <br>[alipaySDK公钥模式](./kms-samples-java/src/main/java/com/aliyun/kms/samples/KmsAlipaySDKPublicKeyDemo.java), <br>[alipaySDK证书模式](./kms-samples-java/src/main/java/com/aliyun/kms/samples/KmsAlipaySDKCertDemo.java)  | --- | --- |
 | PDF文件加签    | [通过阿里云KMS非对称密钥对，<br>对pdf文件进行签名](https://help.aliyun.com/document_detail/148146.html)   | [PDF文件签名示例](./kms-samples-java/src/main/java/com/aliyun/kms/samples/pdfsign/KmsPdfSignSample.java)  | --- | --- |
+| 阿里云SDK V2版本样例    | [使用阿里云SDK V2（kms20160120）调用KMS开放API](https://api.aliyun.com/product/Kms)   | 密钥[加密解密](./kms-samples-java/src/main/java/com/aliyun/kms/samples/EncryptDecryptV2.java), <br>[信封加密](./kms-samples-java/src/main/java/com/aliyun/kms/samples/EnvelopeEncryptV2.java), [信封解密](./kms-samples-java/src/main/java/com/aliyun/kms/samples/EnvelopeDecryptV2.java), <br>非对称密钥[签名验签](./kms-samples-java/src/main/java/com/aliyun/kms/samples/AsymmetricSignVerifyV2.java), <br>SM2密钥[签名验签](./kms-samples-java/src/main/java/com/aliyun/kms/samples/SM2SignVerifyV2.java)  | 信封[加密](./kms-samples-go/envelope_encrypt_v2_best_practices), [解密](./kms-samples-go/envelope_decrypt_v2_best_practices) | 信封[加密](./kms-samples-python/envelope_encrypt_v2.py), [解密](./kms-samples-python/envelope_decrypt_v2.py) |
 
