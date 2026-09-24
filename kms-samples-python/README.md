@@ -14,6 +14,8 @@
 
 ​	5、KMS非对称密钥生成证书请求使用样例
 
+​	6、阿里云SDK V2版本信封加密本地加解密使用样例
+
 
 
 ## 项目源码组织结构
@@ -28,7 +30,9 @@
             cmk_decrypt.py
             cmk_encrypt.py
             envelope_decrypt.py
+            envelope_decrypt_v2.py
             envelope_encrypt.py
+            envelope_encrypt_v2.py
             openapi.py
             test_openapi.py
             generate_csr.py
@@ -46,6 +50,8 @@
 4、asymmetric.py包含了KMS非对称密钥加密、解密、签名和验签使用样例
 
 5、generate_csr.py包含了KMS非对称密钥生成证书请求的使用样例，依赖pyOpenSSL，可通过pip3 install pyOpenSSL安装
+
+6、envelope_encrypt_v2.py和envelope_decrypt_v2.py包含阿里云SDK V2版本（alibabacloud_kms20160120）信封加密本地加密和解密最佳实践样例，依赖cryptography，可通过pip3 install alibabacloud_kms20160120 cryptography安装
 
 
 ## 使用方法
@@ -160,3 +166,59 @@
 
 - 样例中的配置信息，如ak，as，endpoint，regionid等，要根据真实信息进行修改
 
+
+
+### 四、阿里云SDK V2版本信封加密本地加解密最佳实践样例
+
+V2版本样例基于阿里云SDK V2（Python包：alibabacloud_kms20160120）实现，
+数据密钥采用32字节（256位）AES密钥，本地加密采用GCM模式（cryptography.hazmat密码库），流程参考
+[使用KMS信封加密在本地环境进行加解密](https://help.aliyun.com/zh/kms/key-management-service/use-cases/use-envelope-encryption)。
+
+#### 1、加密数据
+
+- 安装依赖：
+
+  ```
+  pip3 install alibabacloud_kms20160120 cryptography
+  ```
+
+- 设置环境变量AccessKey（样例通过环境变量读取AK，请勿在代码中硬编码）：
+
+  ```
+  export ALIBABA_CLOUD_ACCESS_KEY_ID=<your access key id>
+  export ALIBABA_CLOUD_ACCESS_KEY_SECRET=<your access key secret>
+  ```
+
+- 运行样例
+
+  - 准备工作
+    - 确保已拥有一个KMS对称密钥，修改样例中的ENDPOINT与KEY_ID常量
+    - 在kms-samples-python目录下创建data文件夹
+    - 准备一个明文数据文件，复制到data文件夹里，本示例假定明文数据文件名为：sales.csv
+
+  - 打开命令行窗口，切换到项目下kms-samples-python目录，执行下面命令：
+
+    ```
+    python3 envelope_encrypt_v2.py
+    ```
+
+  - 执行成功后，会在data文件夹生成密文文件：sales.csv.cipher（三行文本：数据密钥密文、IV、数据密文）
+
+#### 2、解密数据
+
+- 运行样例
+
+  - 准备工作
+    - 本示例需要用到加密示例生成的密文文件sales.csv.cipher，请先运行加密示例产生此文件
+
+  - 打开命令行窗口，切换到项目下kms-samples-python目录，执行下面命令：
+
+    ```
+    python3 envelope_decrypt_v2.py
+    ```
+
+  - 执行成功后，会在data文件夹生成明文文件：decrypted_sales.csv
+
+注：
+
+- 样例中的配置信息，如endpoint、keyId等，要根据真实信息进行修改

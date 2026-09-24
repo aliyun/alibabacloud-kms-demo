@@ -26,6 +26,8 @@
 
 ​	11、使用KMS非对称CMK对PDF文件签名最佳实践样例
 
+​	12、阿里云SDK V2版本（kms20160120）密钥加解密、签名验签及SM2非对称密钥签名验签使用样例
+
 
 
 ## 项目源码组织结构
@@ -52,6 +54,11 @@
          │  │                  GenerateAndExportDataKeyDemo.java
          │  │                  EnvelopeDecrypt.java
          │  │                  EnvelopeEncrypt.java
+         │  │                  EnvelopeDecryptV2.java
+         │  │                  EnvelopeEncryptV2.java
+         │  │                  EncryptDecryptV2.java
+         │  │                  AsymmetricSignVerifyV2.java
+         │  │                  SM2SignVerifyV2.java
          │  │                  GenerateECCSR.java
          │  │                  GenerateRSACSR.java
          │  │                  GenerateSM2CSR.java
@@ -105,6 +112,8 @@
 10、KmsAlipayEasySDKCertDemo.java和KmsAlipayEasySDKPublicKeyDemo.java包含Alipay-easysdk使用KMS签名最佳实践样例
 
 11、KMSiTextSignature.java KmsPdfSignSample.java 包含KMS非对称密钥对pdf文件进行签名的最佳实践样例
+
+12、EncryptDecryptV2.java、AsymmetricSignVerifyV2.java和SM2SignVerifyV2.java包含阿里云SDK V2版本（kms20160120）密钥加解密、非对称密钥签名验签及SM2非对称密钥签名验签使用样例（信封加解密V2版本样例见EnvelopeEncryptV2.java和EnvelopeDecryptV2.java）
 
 
 ## 使用方法
@@ -315,3 +324,36 @@
 注：
 
 - 样例中的配置信息，如ak，as，endpoint，regionid等，要根据真实信息进行修改
+
+
+
+### 四、阿里云SDK V2版本使用样例
+
+阿里云SDK V2版本样例基于V2 SDK（Maven坐标：com.aliyun:kms20160120）实现，包括以下样例：
+
+- EncryptDecryptV2.java：使用对称主密钥调用Encrypt/Decrypt接口在线加密、解密数据
+- AsymmetricSignVerifyV2.java：使用非对称密钥（RSA/EC）调用AsymmetricSign/AsymmetricVerify接口签名、验签
+- SM2SignVerifyV2.java：使用SM2非对称密钥（KeySpec为EC_SM2）调用AsymmetricSign/AsymmetricVerify接口签名、验签，并演示本地BouncyCastle验签
+- EnvelopeEncryptV2.java、EnvelopeDecryptV2.java：使用GenerateDataKey接口进行信封加密本地加解密
+
+#### 运行方法
+
+- 设置环境变量AccessKey（样例通过环境变量读取AK，请勿在代码中硬编码）：
+
+  ```
+  export ALIBABA_CLOUD_ACCESS_KEY_ID=<your access key id>
+  export ALIBABA_CLOUD_ACCESS_KEY_SECRET=<your access key secret>
+  ```
+
+- 修改样例中的配置占位符：endpoint（KMS接入地址，公网或实例VPC地址，参考 https://api.aliyun.com/product/Kms ）、keyId、keyVersionId等，根据真实信息进行修改
+
+- 使用Maven编译并运行，执行以下命令：
+
+  ```
+  mvn compile
+  mvn exec:java -Dexec.mainClass="com.aliyun.kms.samples.EncryptDecryptV2"
+  ```
+
+注：
+
+- V2版本样例依赖pom.xml中已声明的com.aliyun:kms20160120依赖，SM2本地验签依赖BouncyCastle（bcprov/bcpkix）
