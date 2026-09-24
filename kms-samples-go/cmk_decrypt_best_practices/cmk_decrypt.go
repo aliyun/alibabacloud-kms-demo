@@ -34,7 +34,7 @@ func main() {
 	}
 
 	inFile := "./certs/key.pem.cipher"
-	outFile := "./certs/decrypted_key.pem.cipher"
+	outFile := "./certs/decrypted_key.pem"
 
 	//Read encrypted key file in text mode
 	inContent, err := ioutil.ReadFile(inFile)
